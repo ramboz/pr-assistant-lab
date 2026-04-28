@@ -1,0 +1,23 @@
+{
+  "name": "pr-assistant-lab",
+  "version": "0.0.0",
+  "description": "Sample codebase for the agentic-learning-path curriculum's PR Assistant project (Module 4 onward).",
+  "type": "module",
+  "main": "dist/index.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.6.2",
+    "vitest": "^2.1.0"
+  }
+}
