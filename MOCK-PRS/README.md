@@ -1,39 +1,56 @@
 # Mock PRs
 
-> **Status: TBD.** Branches will be created as part of building out
-> the M4 lab content. This directory currently holds nothing but this
-> stub.
+Three sample pull requests learners run PR Assistant against in the
+M4 lab. They're implemented as branches in this repo, not as files
+in this directory. Branch names follow the pattern
+`mock-pr/<short-slug>`.
 
-The M4 lab promises three sample pull requests learners can run
-PR Assistant against. They'll be implemented as branches in this
-repo, not as files in this directory. Branch names will follow the
-pattern `mock-pr/<short-slug>`.
+The full set of seeded issues across these PRs is documented in
+[../SEEDED-ISSUES.md](../SEEDED-ISSUES.md). Don't read it before
+completing the lab unless you're deliberately spoiling yourself.
 
-When created, the three mock PRs will represent:
+## The three PRs
 
-1. **A small bug fix** — short diff, one or two seeded issues to
-   catch. Calibration baseline: a clean review should find them.
-2. **A medium-sized feature** — multi-file change, mixed signals
-   (some real issues, some red herrings). Tests the reviewer's
-   ability to triage.
-3. **A risky refactor** — large diff touching shared code paths,
-   includes design-level concerns the reviewer should flag for
-   human attention rather than auto-fix.
+### `mock-pr/fix-link-parsing` — small bug fix
 
-The full set of seeded issues across these PRs will be documented in
-[../SEEDED-ISSUES.md](../SEEDED-ISSUES.md) once they exist.
+Widens the link regex in `markdown.ts` to allow balanced parens inside
+URLs (e.g. Wikipedia disambiguation links). Short diff (~20 lines)
+across `src/markdown.ts` and `src/markdown.test.ts`. Two seeded
+issues, both pivoting around what disappeared in the simplification.
+Calibration baseline: a clean review should find them.
 
-## Why a directory, then
+### `mock-pr/add-toc` — medium-sized feature
 
-The M4 lab references `MOCK-PRS/` as a known location. Keeping the
-directory (with this stub) means the lab instructions don't need to
-work around an absent path before the branches land. When the
-branches land, this README will list them with one-line summaries.
+Adds a `--toc` CLI flag and a `withToc` render option that prepend a
+generated `<nav>` table of contents. Headings get slugified anchor
+IDs. Multi-file change (~100 lines) across `src/toc.ts` (new),
+`src/markdown.ts`, `src/index.ts`, `src/types.ts`, `src/cli.ts`, and
+the test file. Five seeded issues spanning security, design,
+correctness, performance, and style. Tests the reviewer's ability to
+triage across categories.
 
-## How to find them, when they exist
+### `mock-pr/extract-plugins` — risky refactor
+
+Introduces a plugin system. Inline-rendering rules are extracted into
+a registry; plugins can also override sanitization. Larger diff
+(~140 lines) touching `src/markdown.ts`, `src/index.ts`,
+`src/types.ts`, plus the new `src/plugins.ts` and `src/plugins.test.ts`.
+Six seeded issues, several at the design level (circular dependency,
+async/sync race, unsafe extension points). The kind of change
+where a reviewer should slow down and flag for human attention
+rather than auto-fix.
+
+## How to find them locally
 
 ```
 git branch --list 'mock-pr/*'
 ```
 
-Until then, the branch list will be empty.
+Each branch is forked off `main` directly; they don't depend on each
+other. Check one out and review its diff against `main`:
+
+```
+git checkout mock-pr/fix-link-parsing
+git log main..HEAD --stat
+git diff main...HEAD
+```
