@@ -193,7 +193,10 @@ touches the renderer, sanitization, and the public API.
   `Promise<void>`; the call site at the bottom of `plugins.ts`
   discards it. Either `await` is needed (which means top-level await,
   changing the module shape), or the validation needs to be
-  synchronous.
+  synchronous. There's also a deliberate `it.skip` in
+  `plugins.test.ts` (`'markdown-core is registered synchronously
+  after import'`) flagging the same issue, with a TODO comment
+  acknowledging it.
 
 ### PR3-SEC-001 — Plugins can override the sanitizer with no restriction
 
