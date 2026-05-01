@@ -1,4 +1,5 @@
 import { buildAuthHeader, getGithubToken } from './auth.js';
+import { RateLimiter } from './rate-limiter.js';
 import type {
   FileChange,
   PullRequest,
@@ -7,6 +8,8 @@ import type {
 } from './types.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
+
+const defaultLimiter = new RateLimiter({ capacity: 10, refillPerSecond: 1 });
 
 export class GithubApiError extends Error {
   readonly status: number;
@@ -17,9 +20,17 @@ export class GithubApiError extends Error {
   }
 }
 
+export class RateLimitedError extends Error {
+  constructor() {
+    super('GitHub API rate limit exceeded; back off and retry');
+    this.name = 'RateLimitedError';
+  }
+}
+
 export interface FetchPrOptions {
   fetchImpl?: typeof fetch;
   env?: NodeJS.ProcessEnv;
+  limiter?: RateLimiter;
 }
 
 /**
@@ -32,6 +43,7 @@ export async function fetchPr(
   options: FetchPrOptions = {},
 ): Promise<PullRequest> {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const limiter = options.limiter ?? defaultLimiter;
   const token = getGithubToken(options.env);
   const headers = {
     Accept: 'application/vnd.github+json',
@@ -39,6 +51,9 @@ export async function fetchPr(
     'X-GitHub-Api-Version': '2022-11-28',
   };
 
+  if (!limiter.consume()) {
+    throw new RateLimitedError();
+  }
   const prUrl = `${GITHUB_API_BASE}/repos/${ref.owner}/${ref.repo}/pulls/${ref.number}`;
   const prResponse = await fetchImpl(prUrl, { headers });
   if (!prResponse.ok) {
@@ -46,6 +61,9 @@ export async function fetchPr(
   }
   const prJson = (await prResponse.json()) as RawPullRequest;
 
+  if (!limiter.consume()) {
+    throw new RateLimitedError();
+  }
   const filesUrl = `${prUrl}/files?per_page=100`;
   const filesResponse = await fetchImpl(filesUrl, { headers });
   if (!filesResponse.ok) {

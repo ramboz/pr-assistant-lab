@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchPr, GithubApiError } from './github.js';
+import { fetchPr, GithubApiError, RateLimitedError } from './github.js';
+import { RateLimiter } from './rate-limiter.js';
+
+function freshLimiter(): RateLimiter {
+  return new RateLimiter({ capacity: 10, refillPerSecond: 1 });
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -35,7 +40,7 @@ describe('fetchPr', () => {
 
     const pr = await fetchPr(
       { owner: 'ramboz', repo: 'pr-assistant-lab', number: 42 },
-      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' } },
+      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' }, limiter: freshLimiter() },
     );
 
     expect(pr.metadata.title).toBe('Add rate limiting');
@@ -54,7 +59,7 @@ describe('fetchPr', () => {
 
     await fetchPr(
       { owner: 'ramboz', repo: 'pr-assistant-lab', number: 42 },
-      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' } },
+      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' }, limiter: freshLimiter() },
     );
 
     const firstCall = fetchImpl.mock.calls[0];
@@ -71,7 +76,7 @@ describe('fetchPr', () => {
     await expect(
       fetchPr(
         { owner: 'ramboz', repo: 'pr-assistant-lab', number: 999 },
-        { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' } },
+        { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' }, limiter: freshLimiter() },
       ),
     ).rejects.toBeInstanceOf(GithubApiError);
   });
@@ -92,9 +97,21 @@ describe('fetchPr', () => {
 
     const pr = await fetchPr(
       { owner: 'ramboz', repo: 'pr-assistant-lab', number: 42 },
-      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' } },
+      { fetchImpl, env: { GITHUB_TOKEN: 'ghp_x' }, limiter: freshLimiter() },
     );
 
     expect(pr.files[0].patch).toBe('');
+  });
+
+  it('throws RateLimitedError when the limiter is empty', async () => {
+    const exhausted = new RateLimiter({ capacity: 1, refillPerSecond: 0.0001 });
+    exhausted.consume();
+
+    await expect(
+      fetchPr(
+        { owner: 'ramboz', repo: 'pr-assistant-lab', number: 42 },
+        { fetchImpl: vi.fn(), env: { GITHUB_TOKEN: 'ghp_x' }, limiter: exhausted },
+      ),
+    ).rejects.toBeInstanceOf(RateLimitedError);
   });
 });
