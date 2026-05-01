@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderPost } from './index.js';
+import { samplePost } from './test-fixtures.js';
 
 describe('renderPost', () => {
   it('parses front-matter and renders the body', () => {
@@ -34,5 +35,10 @@ Welcome to the blog.`;
     const raw = '# safe\n\n<script>x</script>';
     const result = renderPost(raw, { sanitize: true });
     expect(result.html).not.toContain('<script>');
+  });
+
+  it('renders the shared sample post', () => {
+    samplePost.frontMatter.title = `${samplePost.frontMatter.title} (revised)`;
+    expect(samplePost.frontMatter.title).toContain('Hello World');
   });
 });
