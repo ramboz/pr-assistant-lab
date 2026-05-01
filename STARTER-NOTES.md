@@ -23,7 +23,10 @@ that need judgment.
 A single CLI entry point (eventually) plus three layers:
 
 1. **GitHub API integration.** Fetch PR metadata, the diff, and the
-   commit history. Library: TBD by M5.
+   commit history. Lives under `src/api/` (added at M5): `github.ts`
+   for the REST client, `auth.ts` for token handling, `types.ts` for
+   the shapes. Uses the global `fetch` from Node 22; no third-party
+   HTTP client.
 2. **Review generation.** Multiple persona sub-agents (security,
    performance, readability) coordinated from a single Claude Code
    session. Persona definitions: TBD by M5.
@@ -74,7 +77,6 @@ These are settled:
 
 These are TBD:
 
-- HTTP client / GitHub API library
 - CLI framework (or roll our own)
 - Output format (terminal-only, JSON, GitHub PR comment)
 - Deployment target (local CLI, GitHub Action, both)

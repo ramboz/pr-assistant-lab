@@ -9,24 +9,29 @@ completing the lab unless you're deliberately spoiling yourself.
 
 ## Issue index
 
-13 issues across three mock PRs. Categories: Security (3), Bug (3),
-Design (3), Performance (2), Style (2).
+17 issues across five mock PRs. The first three branches are the
+M4 lab set; `mock-pr/api-rate-limiting` and
+`mock-pr/tests-fixture-overhaul` are the M5 lab set.
 
-| ID            | Category    | Severity | Branch                       |
-|---------------|-------------|----------|------------------------------|
-| PR1-SEC-001   | Security    | High     | mock-pr/fix-link-parsing     |
-| PR1-BUG-001   | Bug         | Low      | mock-pr/fix-link-parsing     |
-| PR2-SEC-001   | Security    | High     | mock-pr/add-toc              |
-| PR2-DESIGN-001| Design      | Medium   | mock-pr/add-toc              |
-| PR2-BUG-001   | Bug         | Medium   | mock-pr/add-toc              |
-| PR2-PERF-001  | Performance | Low      | mock-pr/add-toc              |
-| PR2-STYLE-001 | Style       | Low      | mock-pr/add-toc              |
-| PR3-DESIGN-001| Design      | High     | mock-pr/extract-plugins      |
-| PR3-BUG-001   | Bug         | High     | mock-pr/extract-plugins      |
-| PR3-SEC-001   | Security    | High     | mock-pr/extract-plugins      |
-| PR3-DESIGN-002| Design      | Medium   | mock-pr/extract-plugins      |
-| PR3-PERF-001  | Performance | Medium   | mock-pr/extract-plugins      |
-| PR3-STYLE-001 | Style       | Low      | mock-pr/extract-plugins      |
+| ID            | Category    | Severity | Branch                          |
+|---------------|-------------|----------|---------------------------------|
+| PR1-SEC-001   | Security    | High     | mock-pr/fix-link-parsing        |
+| PR1-BUG-001   | Bug         | Low      | mock-pr/fix-link-parsing        |
+| PR2-SEC-001   | Security    | High     | mock-pr/add-toc                 |
+| PR2-DESIGN-001| Design      | Medium   | mock-pr/add-toc                 |
+| PR2-BUG-001   | Bug         | Medium   | mock-pr/add-toc                 |
+| PR2-PERF-001  | Performance | Low      | mock-pr/add-toc                 |
+| PR2-STYLE-001 | Style       | Low      | mock-pr/add-toc                 |
+| PR3-DESIGN-001| Design      | High     | mock-pr/extract-plugins         |
+| PR3-BUG-001   | Bug         | High     | mock-pr/extract-plugins         |
+| PR3-SEC-001   | Security    | High     | mock-pr/extract-plugins         |
+| PR3-DESIGN-002| Design      | Medium   | mock-pr/extract-plugins         |
+| PR3-PERF-001  | Performance | Medium   | mock-pr/extract-plugins         |
+| PR3-STYLE-001 | Style       | Low      | mock-pr/extract-plugins         |
+| PR4-BUG-001   | Bug         | High     | mock-pr/api-rate-limiting       |
+| PR4-DESIGN-001| Design      | Medium   | mock-pr/api-rate-limiting       |
+| PR5-DESIGN-001| Design      | Medium   | mock-pr/tests-fixture-overhaul  |
+| PR5-BUG-001   | Bug         | Low      | mock-pr/tests-fixture-overhaul  |
 
 ---
 
@@ -254,6 +259,93 @@ touches the renderer, sanitization, and the public API.
 - **How PR Assistant should detect it:** Two exported functions push
   into the same `registry` array; signatures and async-ness diverge
   with no documented reason.
+
+---
+
+---
+
+## PR 4 — `mock-pr/api-rate-limiting`
+
+A small feature: add a token-bucket rate limiter in front of the
+GitHub client. Diff confined to `src/api/`. Used by the M5 lab to
+demonstrate that an API-scoped rule loads here while a markdown-scoped
+rule stays dormant.
+
+### PR4-BUG-001 — Token bucket never refills under sustained load
+
+- **Category:** Bug
+- **Severity:** High
+- **Location:** `src/api/rate-limiter.ts`, `consume()`
+- **What's wrong:** The refill computation uses `Date.now() - this.lastRefill`
+  but only updates `this.lastRefill` when a token is *actually consumed*,
+  not on every call. Under a stream of `consume()` calls that all return
+  false (bucket empty), the elapsed-time delta keeps growing but never
+  resets, and the next successful consume jumps the bucket past its
+  capacity. Easy to mis-test because single-call tests work; only a
+  rapid loop exposes it.
+- **How PR Assistant should detect it:** `consume()` reads
+  `this.lastRefill` on every call but only writes to it inside the
+  success branch. The classic "update timestamp regardless" pattern is
+  missing.
+
+### PR4-DESIGN-001 — Limiter coupled to wall-clock time
+
+- **Category:** Design
+- **Severity:** Medium
+- **Location:** `src/api/rate-limiter.ts`, constructor and `consume()`
+- **What's wrong:** The class calls `Date.now()` directly. Tests have
+  to stub the global, and the implementation can't be reused with a
+  fake clock for deterministic behavior in batch-replay mode (a use
+  case M8 needs). A `now: () => number` constructor option, defaulting
+  to `Date.now`, would have made the class testable and replayable
+  without monkey-patching.
+- **How PR Assistant should detect it:** No injected clock; tests
+  resort to `vi.useFakeTimers()` or `vi.spyOn(Date, 'now')`. The
+  testing pain is the design signal.
+
+---
+
+## PR 5 — `mock-pr/tests-fixture-overhaul`
+
+A test refactor: pull inline fixtures out into `src/test-fixtures.ts`
+and update several `*.test.ts` files to import from it. Used by the
+M5 lab as the counterpart to the API PR — the diff lives entirely
+under the tests glob, so a tests-scoped rule should load and an
+API-scoped rule should stay dormant.
+
+### PR5-DESIGN-001 — Fixture module imports from production code
+
+- **Category:** Design
+- **Severity:** Medium
+- **Location:** `src/test-fixtures.ts`, top of file
+- **What's wrong:** `test-fixtures.ts` lives under `src/` (so it
+  ships in `dist/`) and imports `parsePost` from the production
+  module to *generate* fixtures. The production bundle now contains
+  test-only data, and a circular dependency lurks if any production
+  code ever imports from a future helper that itself reaches into
+  fixtures. Either move fixtures to a `tests/` tree outside `rootDir`,
+  or add the file to `tsconfig.json`'s `exclude` list and import it
+  via a relative `../` from each test.
+- **How PR Assistant should detect it:** A `*-fixtures.ts` file
+  shipped under `src/`, imported only by `*.test.ts` files, with no
+  exclusion from the TypeScript build.
+
+### PR5-BUG-001 — Fixture mutates a shared object across tests
+
+- **Category:** Bug
+- **Severity:** Low
+- **Location:** `src/test-fixtures.ts`, `samplePost`
+- **What's wrong:** `samplePost` is exported as a single object
+  literal. Tests that need to tweak a field (e.g. adding a tag,
+  changing the title) push into `samplePost.frontMatter.tags`
+  directly rather than spreading first. Test order then matters:
+  an earlier test that pushes into `tags` leaks into later tests.
+  Hidden today because the test runner happens to load files
+  alphabetically and the tweaking tests sit late in the order.
+- **How PR Assistant should detect it:** Test code that mutates a
+  shared exported fixture without cloning. The fixture should be a
+  factory function (`makeSamplePost()`) or each test should spread
+  before tweaking.
 
 ---
 

@@ -1,15 +1,21 @@
 # Mock PRs
 
-Three sample pull requests learners run PR Assistant against in the
-M4 lab. They're implemented as branches in this repo, not as files
-in this directory. Branch names follow the pattern
-`mock-pr/<short-slug>`.
+Sample pull requests learners run PR Assistant against in the
+Module 4 and Module 5 labs. They're implemented as branches in this
+repo, not as files in this directory. Branch names follow the
+pattern `mock-pr/<short-slug>`.
+
+The first three (`fix-link-parsing`, `add-toc`, `extract-plugins`)
+are the M4 lab set: review-quality calibration on the markdown
+renderer. The next two (`api-rate-limiting`, `tests-fixture-overhaul`)
+are the M5 lab set: scope-disjoint diffs that let a learner observe
+which path-scoped rules load for which file changes.
 
 The full set of seeded issues across these PRs is documented in
 [../SEEDED-ISSUES.md](../SEEDED-ISSUES.md). Don't read it before
 completing the lab unless you're deliberately spoiling yourself.
 
-## The three PRs
+## The PRs
 
 ### `mock-pr/fix-link-parsing` — small bug fix
 
@@ -39,6 +45,25 @@ Six seeded issues, several at the design level (circular dependency,
 async/sync race, unsafe extension points). The kind of change
 where a reviewer should slow down and flag for human attention
 rather than auto-fix.
+
+### `mock-pr/api-rate-limiting` — small feature, scoped to `src/api/`
+
+Adds a token-bucket rate limiter in front of the GitHub client.
+Diff (~80 lines) is confined to `src/api/github.ts`,
+`src/api/github.test.ts`, and a new `src/api/rate-limiter.ts` plus
+its test. Two seeded issues. Useful to the M5 lab because the diff
+fits cleanly under a single `src/api/**` glob: the api rule should
+load, the tests rule should load (test files are touched), and
+rules scoped elsewhere stay dormant.
+
+### `mock-pr/tests-fixture-overhaul` — refactor, scoped to test files
+
+Pulls inline test fixtures out into a shared `src/test-fixtures.ts`
+module and updates several `*.test.ts` files to import from it.
+Diff (~60 lines) touches only test files plus the new fixtures
+module. Two seeded issues. Useful to the M5 lab because only the
+tests rule should load; api, markdown, and any other path-scoped
+rules stay dormant.
 
 ## How to find them locally
 

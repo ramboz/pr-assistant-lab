@@ -10,6 +10,15 @@ export { renderMarkdown } from './markdown.js';
 export { sanitizeHtml, escapeHtml } from './sanitize.js';
 export { slugify } from './slug.js';
 
+export type {
+  FileChange,
+  PullRequest,
+  PullRequestMetadata,
+  PullRequestRef,
+} from './api/types.js';
+export { fetchPr, GithubApiError } from './api/github.js';
+export { getGithubToken, MissingTokenError } from './api/auth.js';
+
 /**
  * Parse a markdown source (with optional front-matter), render the body to
  * HTML, and derive a URL slug from the front-matter title or the first
