@@ -19,6 +19,9 @@ export type {
 export { fetchPr, GithubApiError } from './api/github.js';
 export { getGithubToken, MissingTokenError } from './api/auth.js';
 
+export type { Finding, Review, ReviewerName, ReviewOptions, Severity } from './reviewer/types.js';
+export { runReview } from './reviewer/index.js';
+
 /**
  * Parse a markdown source (with optional front-matter), render the body to
  * HTML, and derive a URL slug from the front-matter title or the first

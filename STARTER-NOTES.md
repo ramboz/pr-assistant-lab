@@ -23,15 +23,17 @@ that need judgment.
 A single CLI entry point (eventually) plus three layers:
 
 1. **GitHub API integration.** Fetch PR metadata, the diff, and the
-   commit history. Lives under `src/api/` (added at M5): `github.ts`
-   for the REST client, `auth.ts` for token handling, `types.ts` for
-   the shapes. Uses the global `fetch` from Node 22; no third-party
-   HTTP client.
-2. **Review generation.** Multiple persona sub-agents (security,
-   performance, readability) coordinated from a single Claude Code
-   session. Persona definitions: TBD by M5.
+   commit history. Lives under `src/api/`: `github.ts` for the REST
+   client, `auth.ts` for token handling, `types.ts` for the shapes.
+   Uses the global `fetch` from Node 22; no third-party HTTP client.
+2. **Review generation.** Lives under `src/reviewer/`: a `runReview`
+   orchestrator that dispatches a fetched PR to the configured
+   persona reviewers (security, performance, readability) and
+   aggregates their findings into a single scored review. The
+   persona reviewers themselves are Claude Code sub-agents under
+   `.claude/agents/`, built during the M6 lab.
 3. **Oracle.** A composite score combining CI status, lint, coverage
-   delta, and seeded-issue-detection rate. Implementation: TBD by M6.
+   delta, and seeded-issue-detection rate. Implementation: TBD by M7.
 
 ## What ships in this repo
 
@@ -52,19 +54,22 @@ A single CLI entry point (eventually) plus three layers:
 
 - **M4:** What's the minimal viable CLAUDE.md for this project? What's
   the contrast between running Claude Code with and without it?
-- **M5:** How to scope tool permissions per persona sub-agent? Do
-  personas share state, or work from independent context?
-- **M6:** What's in the composite oracle? Lint config, coverage
+- **M5:** Which conventions belong in path-scoped rules under
+  `.claude/rules/` vs. the project-wide CLAUDE.md? How much overlap
+  is healthy before the rules need to be split further?
+- **M6:** How to scope tool permissions per persona sub-agent? What
+  return-format contract makes three agents aggregate cleanly without
+  the orchestrator reconciling three different shapes?
+- **M7:** What's in the composite oracle? Lint config, coverage
   threshold, seeded-issue detection rate, CI status. Weights TBD by
   the lab.
-- **M7:** Ralph-loop budget controls. Maximum runtime per attempt,
+- **M8:** Ralph-loop budget controls. Maximum runtime per attempt,
   maximum total spend.
-- **M8:** Worktree strategy. One agent per fix-strategy branch, or
-  one agent per file?
-- **M9:** Agent Team composition. Lead + how many teammates? How
-  does the lead allocate work?
-- **M10:** Which MCP servers to integrate? Slack for notifications is
-  the obvious one; what else earns its place?
+- **M9:** Which policies belong in stop-hooks vs. ad-hoc reviewer
+  prompts? The meta-reviewer (CLAUDE.md drift checker) is the first
+  candidate.
+- **M10:** Worktree strategy for parallel fix-strategy races. One
+  agent per branch, or one agent per file?
 
 ## Tech stack constraints
 

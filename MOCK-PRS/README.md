@@ -1,7 +1,7 @@
 # Mock PRs
 
 Sample pull requests learners run PR Assistant against in the
-Module 4 and Module 5 labs. They're implemented as branches in this
+Module 4, 5, and 6 labs. They're implemented as branches in this
 repo, not as files in this directory. Branch names follow the
 pattern `mock-pr/<short-slug>`.
 
@@ -9,7 +9,9 @@ The first three (`fix-link-parsing`, `add-toc`, `extract-plugins`)
 are the M4 lab set: review-quality calibration on the markdown
 renderer. The next two (`api-rate-limiting`, `tests-fixture-overhaul`)
 are the M5 lab set: scope-disjoint diffs that let a learner observe
-which path-scoped rules load for which file changes.
+which path-scoped rules load for which file changes. The sixth
+(`add-review-engine`) is the M6 lab set: the diff three persona
+sub-agents review side-by-side against the M5 rules-only baseline.
 
 The full set of seeded issues across these PRs is documented in
 [../SEEDED-ISSUES.md](../SEEDED-ISSUES.md). Don't read it before
@@ -64,6 +66,18 @@ Diff (~60 lines) touches only test files plus the new fixtures
 module. Two seeded issues. Useful to the M5 lab because only the
 tests rule should load; api, markdown, and any other path-scoped
 rules stay dormant.
+
+### `mock-pr/add-review-engine` — medium feature, scoped to `src/reviewer/`
+
+Fleshes out the `src/reviewer/` subsystem from the empty stub on
+`main` into a working orchestrator: persona definitions, prompt
+builder, scoring helper, and the `runReview` orchestration on top.
+Diff (~200 lines) touches `src/reviewer/index.ts` and adds
+`src/reviewer/personas.ts`, `src/reviewer/prompt.ts`,
+`src/reviewer/scoring.ts` plus their tests. Six seeded issues, two
+each in security, performance, and readability scope. Used by the
+M6 lab as the diff three persona sub-agents review side-by-side,
+with a direct comparison against the M5 rules-only baseline.
 
 ## How to find them locally
 

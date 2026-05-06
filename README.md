@@ -11,15 +11,18 @@ that grows over the course of Modules 4 through 10:
 
 - **M4** (Writing a CLAUDE.md): write a CLAUDE.md against this repo,
   run Claude Code with and without it, compare.
-- **M5** (Sub-agents): decompose review into persona sub-agents
-  (security, performance, readability).
-- **M6** (Oracles): build `oracle.sh` to score PR-review quality
-  objectively.
-- **M7** (Headless / Ralph loop): wrap PR Assistant in a Ralph loop,
+- **M5** (Rules): split CLAUDE.md into path-scoped rules under
+  `.claude/rules/` so the right conventions load with the right files.
+- **M6** (Sub-agents and skills): add two skills and three persona
+  sub-agents (security, performance, readability) on top of the rules
+  structure. Adds `src/reviewer/` to this repo.
+- **M7** (Oracles): build `oracle.sh` to score PR-review quality
+  objectively. The persona crew from M6 is what the oracle grades.
+- **M8** (Headless / Ralph loop): wrap PR Assistant in a Ralph loop,
   run overnight.
-- **M8** (Parallel workers): race fix strategies across worktrees.
-- **M9** (Agent Teams): coordinate as an Agent Team.
-- **M10** (Crews / MCP): package as a GitHub Action with Slack MCP.
+- **M9** (Hooks): formalize policies (e.g., the meta-reviewer) as
+  stop-hooks that gate the loop.
+- **M10** (Parallel workers): race fix strategies across worktrees.
 
 Read [STARTER-NOTES.md](STARTER-NOTES.md) for the project's intended
 scope and what's TBD.
@@ -27,11 +30,11 @@ scope and what's TBD.
 The seeded issues in this codebase (the bugs and design problems
 PR Assistant is meant to find) are documented in
 [SEEDED-ISSUES.md](SEEDED-ISSUES.md). That file is the answer key for
-the M4 lab — don't read it before completing the lab unless you're
-deliberately spoiling yourself.
+the M4, M5, and M6 labs — don't read it before completing the lab
+unless you're deliberately spoiling yourself.
 
-The three sample PRs the M4 lab references will live as branches; see
-[MOCK-PRS/README.md](MOCK-PRS/README.md) for the current state.
+The sample PRs the labs reference live as branches; see
+[MOCK-PRS/README.md](MOCK-PRS/README.md) for the current set.
 
 ## A note on CLAUDE.md
 
